@@ -2,15 +2,15 @@
   "config": {
     "step": {
       "user": {
-        "title": "Select Connection Mode",
-        "description": "Choose how Home Assistant should connect to your Philips Avent Baby Monitor+.",
+        "title": "Select Setup Mode",
+        "description": "Choose how to set up your Philips Avent Baby Monitor+. You can automatically extract the camera's localKey via a one-time cloud login, or enter your localKey manually.",
         "data": {
-          "mode": "Connection Mode"
+          "mode": "Setup Mode"
         }
       },
       "lan": {
         "title": "LAN-Only Setup",
-        "description": "Connect directly to the camera over your local network (TCP 6668).",
+        "description": "Connect directly to the camera over your local network (TCP 6668). If you used Automatic Local Key Extraction, your Device ID and Local Key are pre-filled below.",
         "data": {
           "host": "Camera IP Address",
           "device_id": "Device ID",
@@ -20,15 +20,34 @@
         }
       },
       "cloud": {
-        "title": "Cloud MQTT Setup",
-        "description": "Sign in with your Tuya / Baby Monitor+ account.",
+        "title": "Tuya Account & App Signing Setup",
+        "description": "Sign in once to extract your camera's Device ID and Local Key (or use Cloud MQTT). Provide either the local path to the Baby Monitor+ APK (to auto-extract cert & t_s.bmp token) or the pre-extracted cert SHA-256 and bmp_token.",
         "data": {
-          "email": "Email",
-          "password": "Password",
-          "region": "Region",
-          "mfa_code": "Email MFA Code (if required)"
+          "email": "Account Email",
+          "password": "Account Password",
+          "region": "Datacenter Region",
+          "country_code": "Phone Country Code (e.g. 45, 1, 44)",
+          "app_key": "Tuya App Key (clientId)",
+          "app_secret": "Tuya App Secret",
+          "apk_path": "Path to Baby Monitor+ APK (optional if cert & bmp_token provided)",
+          "cert_sha256": "APK Cert SHA-256 Colon-Uppercase (optional if APK provided)",
+          "bmp_token": "Decoded t_s.bmp Token 64-hex (optional if APK provided)",
+          "app_version": "App Version",
+          "mfa_code": "Email MFA Code (leave blank on first attempt to trigger email)"
+        }
+      },
+      "mfa": {
+        "title": "Email MFA Verification",
+        "description": "A 6-digit verification code has been emailed to your account. Enter it below to complete authentication and extract your camera's localKey.",
+        "data": {
+          "mfa_code": "6-Digit Email MFA Code"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Failed to authenticate with Tuya Cloud. Check your credentials and region.",
+      "invalid_signing_config": "Provide either a valid APK file path or both Cert SHA-256 and bmp_token.",
+      "invalid_mfa": "Invalid or expired MFA verification code."
     },
     "abort": {
       "already_configured": "This baby monitor is already configured."

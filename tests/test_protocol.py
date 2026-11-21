@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
+import json
 import sys
 import types
 import unittest
@@ -23,13 +23,28 @@ if "custom_components.babymonitor" not in sys.modules:
     bm.__path__ = [str(PKG_PATH)]
     sys.modules["custom_components.babymonitor"] = bm
 
+from custom_components.babymonitor.protocol.bmp_decode import (  # noqa: E402
+    _matrix_solve,
+    format_cert_colon_upper,
+    strhash,
+)
 from custom_components.babymonitor.protocol.crypto import (  # noqa: E402
+    APP_PACKAGE_NAME,
     aes_ecb_decrypt,
     aes_ecb_encrypt,
     aes_gcm_decrypt,
     aes_gcm_encrypt,
+    assemble_master_key_g,
+    canonical_string,
+    compute_ch_key,
+    decrypt_et3_result,
+    encrypt_et3_post_data,
+    generate_phone_util_device_id,
     pack_frame_55aa,
+    post_data_digest_hex,
+    sign_atop_request,
     sign_tuya_request,
+    swap_sign_string,
     unpack_frame_55aa,
 )
 from custom_components.babymonitor.protocol.lan import LocalStunServer  # noqa: E402
@@ -67,6 +82,53 @@ class TestCrypto(unittest.TestCase):
             sig,
             sign_tuya_request({"v": "1.0", "a": "tuya.m.user.token.get"}, "mysecret"),
         )
+
+    def test_atop_signing_and_et3_roundtrip(self) -> None:
+        digest = bytes(range(32))
+        cert_upper = format_cert_colon_upper(digest)
+        self.assertEqual(len(cert_upper), 95)
+
+        bmp_token = "cd" * 32
+        g = assemble_master_key_g(
+            APP_PACKAGE_NAME, cert_upper, bmp_token, "SYNTH_SECRET"
+        )
+        self.assertEqual(len(g), len(APP_PACKAGE_NAME) + 1 + 95 + 1 + 32 + 1 + 12)
+
+        ch_key = compute_ch_key("SYNTH_APPKEY", APP_PACKAGE_NAME, cert_upper)
+        self.assertEqual(len(ch_key), 8)
+
+        req_id = "11111111-2222-4333-8444-555555555555"
+        pd_json = json.dumps({"gid": 12345}, separators=(",", ":"))
+        enc_b64 = encrypt_et3_post_data(req_id, g, pd_json, ecode="SYNTH_ECODE")
+        dec_bytes = decrypt_et3_result(req_id, g, enc_b64, ecode="SYNTH_ECODE")
+        self.assertEqual(dec_bytes.decode("utf-8"), pd_json)
+
+        params = {
+            "a": "m.life.my.group.device.list",
+            "v": "2.2",
+            "time": "1700000000",
+            "requestId": req_id,
+            "postData": post_data_digest_hex(enc_b64.encode("utf-8")),
+            "notWhitelisted": "ignored",
+        }
+        str2 = canonical_string(params)
+        self.assertNotIn("notWhitelisted", str2)
+        sig = sign_atop_request(params, g)
+        self.assertEqual(len(sig), 64)
+
+    def test_swap_sign_string_and_device_id(self) -> None:
+        s = "AAAAAAAABBBBBBBBCCCCCCCCDDDDDDDD"
+        self.assertEqual(swap_sign_string(s), "BBBBBBBBAAAAAAAADDDDDDDDCCCCCCCC")
+        dev_id = generate_phone_util_device_id(
+            "google", "Pixel 8 Pro", b"\x11" * 32, b"\x22" * 32
+        )
+        self.assertEqual(len(dev_id), 44)
+
+    def test_bmp_vandermonde_solve(self) -> None:
+        # Constant polynomial b = 0x1234 -> 1x1 Vandermonde [1 | 0x1234]
+        solved = _matrix_solve([("05", "1234")])
+        self.assertEqual(solved, bytes.fromhex("1234"))
+        self.assertGreater(strhash(b"SYNTH_APPKEY"), 0)
 
 
 class TestLocalStunServer(unittest.IsolatedAsyncioTestCase):

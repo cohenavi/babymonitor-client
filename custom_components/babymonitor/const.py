@@ -16,6 +16,7 @@ PLATFORMS = [
 CONF_MODE = "mode"
 MODE_LAN = "lan"
 MODE_CLOUD = "cloud"
+MODE_AUTO_KEY = "auto_key"
 
 # LAN configuration
 CONF_HOST = "host"
@@ -27,21 +28,31 @@ CONF_PROTOCOL_VERSION = "protocol_version"
 DEFAULT_LAN_PORT = 6668
 DEFAULT_DISCOVERY_PORT_PLAIN = 6666
 DEFAULT_DISCOVERY_PORT_ENC = 6667
-DEFAULT_PROTOCOL_VERSION = "3.4"
+DEFAULT_PROTOCOL_VERSION = "3.3"
 
-# Cloud configuration
+# Cloud / Automatic Key Extraction configuration
 CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
 CONF_REGION = "region"
+CONF_COUNTRY_CODE = "country_code"
 CONF_MFA_CODE = "mfa_code"
 CONF_SESSION_DATA = "session_data"
+CONF_APP_KEY = "app_key"
+CONF_APP_SECRET = "app_secret"
+CONF_APK_PATH = "apk_path"
+CONF_CERT_SHA256 = "cert_sha256"
+CONF_BMP_TOKEN = "bmp_token"
+CONF_APP_VERSION = "app_version"
 
 DEFAULT_REGION = "eu"
+DEFAULT_COUNTRY_CODE = "45"
+DEFAULT_APP_VERSION = "1.9.0"
+
 TUYA_REGIONS = {
     "eu": "https://a1.tuyaeu.com/api.json",
-    "us": "https://a1.tuyaus.com/api.json",
-    "cn": "https://a1.tuyacn.com/api.json",
-    "in": "https://a1.tuyain.com/api.json",
+    "us": "https://a1-us.iotbing.com/api.json",
+    "in": "https://a1-in.iotbing.com/api.json",
+    "cn": "https://a1.iot334.com/api.json",
 }
 
 # Tuya IPC / Baby Monitor Data Points (DPs)
